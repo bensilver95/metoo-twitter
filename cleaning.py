@@ -111,11 +111,11 @@ homedir = '/home/bms2202/newmetoo/'
 ALL_TWEETS = pd.DataFrame()
 
 pbar = ProgressBar()
-for file in pbar(glob(homedir + "tweets/pre_post_oneyear/raw/*/*.csv")):
+for file in pbar(glob(homedir + "tweets/raw/*.csv")):
     filename = file.split("/")[-1]
     df = pd.read_csv(file)
     df = small_clean(df)
-    df.to_csv(homedir + "tweets/pre_post_oneyear/clean/" + filename)
+    df.to_csv(homedir + "tweets/clean/" + filename)
 
     dfprep = analysis_prep(df,filename)   
     ALL_TWEETS = pd.concat([ALL_TWEETS,dfprep]).reset_index(drop = True)
