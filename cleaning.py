@@ -77,6 +77,7 @@ def small_clean(df):
     for tweet in df["tweet"]:
         nohttp = re.sub(r"http\S+", "", tweet)
         nolinks.append(nohttp)
+    #df['tweet'] = nolinks
     df = df.assign(tweet = nolinks)
     return df.drop_duplicates(subset = 'tweet', keep = "first").reset_index(drop = True)
 
@@ -119,6 +120,7 @@ for file in pbar(glob(homedir + "tweets/raw/*.csv")):
 
     dfprep = analysis_prep(df,filename)   
     ALL_TWEETS = pd.concat([ALL_TWEETS,dfprep]).reset_index(drop = True)
+    #ALL_TWEETS = ALL_TWEETS.append(dfprep, ignore_index = True)
 
 
 ## post processing for all tweets
@@ -129,9 +131,12 @@ pbar3 = ProgressBar()
 ALL_TWEETS['tweet_clean'] = [tweet_process(text) for text in pbar3(ALL_TWEETS['tweet'])]
 ALL_TWEETS = ALL_TWEETS.dropna(subset = ['tweet_clean'])
 
-if len(sys.argv) == 1:
-    print("saving file")
-    ALL_TWEETS.to_csv(homedir + 'data/ALL_TWEETS_indiv.csv', index = 'False')
+print("saving file")
+ALL_TWEETS.to_csv(homedir + 'data/ALL_TWEETS_indiv.csv', index = 'False')
+# issue with na tweets not being removed
+ALL_TWEETS = pd.read_csv(homedir + 'data/ALL_TWEETS_indiv.csv', lineterminator='\n', low_memory = False)
+ALL_TWEETS = ALL_TWEETS.dropna(subset = ['tweet_clean'])
+ALL_TWEETS.to_csv(homedir + 'data/ALL_TWEETS_indiv.csv', index = 'False')
 
 print('concatenating ALL_TWEETS')
 concat_df = pd.DataFrame(columns = ["date","tweet","datediff","weekdiff","tweet_period","PublicFigure","count"])
@@ -143,6 +148,13 @@ for person in pbar2(ALL_TWEETS['PublicFigure'].unique()):
         minier_df = mini_df[mini_df['tweet_period'] == timepoint]
         for d in minier_df['date'].unique():
             miniest_df = minier_df[minier_df['date'] == d]
+#            concat_df = concat_df.append({'PublicFigure':person,'date':d,
+#                                                            'tweet':' '.join(text for text in miniest_df['tweet']),
+#                                                           'tweet_period':timepoint, 
+#                                                            'datediff': miniest_df['datediff'].unique()[0],
+#                                                            'weekdiff': miniest_df['weekdiff'].unique()[0],
+#                                                            'count': len(miniest_df)}, 
+#                                                           ignore_index = True)
             tmp = pd.DataFrame({'PublicFigure':person,'date':d,
                                                             'tweet':' '.join(text for text in miniest_df['tweet']),
                                                            'tweet_period':timepoint, 
