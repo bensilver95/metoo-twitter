@@ -147,8 +147,5 @@ predict_df = predict_df.dropna(subset = ['tweet_clean'])
 predictions, raw_outputs = model.predict(predict_df['tweet_clean'].tolist())
 
 
-
-st_scores = pd.DataFrame({'date':predict_df['date'],'PublicFigure':predict_df['PublicFigure'],
-                             'tweet_period':predict_df['tweet_period'],'datediff':predict_df['datediff'],
-                             'liking_st':predictions})
-st_scores.to_csv(homedir + 'data/st_scores.csv', index = False)
+predict_df['liking_st'] = predictions
+predict_df.to_csv(homedir + 'data/ALL_TWEETS_indiv.csv', index = False)
