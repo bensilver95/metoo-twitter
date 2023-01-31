@@ -128,13 +128,10 @@ ALL_TWEETS = ALL_TWEETS.replace({'PublicFigure':{'Louis C.K.':'Louis CK','T.J. M
 pbar3 = ProgressBar()
 ALL_TWEETS['tweet_clean'] = [tweet_process(text) for text in pbar3(ALL_TWEETS['tweet'])]
 ALL_TWEETS = ALL_TWEETS.dropna(subset = ['tweet_clean'])
+PrePost_TWEETS = ALL_TWEETS[ALL_TWEETS['tweet_period'] != 'oneyear'].reset_index(drop = True)
 
 print("saving file")
-ALL_TWEETS.to_csv(homedir + 'data/ALL_TWEETS_indiv.csv', index = 'False')
-# issue with na tweets not being removed
-ALL_TWEETS = pd.read_csv(homedir + 'data/ALL_TWEETS_indiv.csv', lineterminator='\n', low_memory = False)
-ALL_TWEETS = ALL_TWEETS.dropna(subset = ['tweet_clean'])
-ALL_TWEETS.to_csv(homedir + 'data/ALL_TWEETS_indiv.csv', index = 'False')
+PrePost_TWEETS.to_csv(homedir + 'data/PrePost_TWEETS_indiv.csv', index = 'False')
 
 print('concatenating ALL_TWEETS')
 concat_df = pd.DataFrame(columns = ["date","tweet","datediff","weekdiff","tweet_period","PublicFigure","count"])
@@ -156,3 +153,8 @@ for person in pbar2(ALL_TWEETS['PublicFigure'].unique()):
              
 print("saving concat file")
 concat_df.to_csv(homedir + "data/ALL_TWEETS.csv", index = False)
+
+# issue with na tweets not being removed
+PrePost_TWEETS = pd.read_csv(homedir + 'data/PrePost_TWEETS_indiv.csv', lineterminator='\n', low_memory = False)
+PrePost_TWEETS = PrePost_TWEETS.dropna(subset = ['tweet_clean'])
+PrePost_TWEETS.to_csv(homedir + 'data/PrePost_TWEETS_indiv.csv', index = 'False')
