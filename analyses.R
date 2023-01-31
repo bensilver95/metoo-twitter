@@ -21,7 +21,8 @@ t_concat_raw = read_csv('data/ALL_TWEETS.csv')
 t_concat <- t_concat_raw %>% 
   rename(timepoint = "tweet_period") %>% 
   filter(datediff > 0) %>% 
-  mutate(timepoint.d = ifelse(timepoint == "pre",0,1),
+  mutate(timepoint.d = ifelse(timepoint == "pre",0,
+                              ifelse(timepoint == "post",1,2)),
          datediff = datediff - 1,
          weekdiff = weekdiff - 1,
          datetime = as_datetime(date),
@@ -228,9 +229,9 @@ m5a <- brm(care.vice ~ timepoint.d +
              (1 + timepoint.d | PublicFigure),
            data = tweets %>% 
              filter(timepoint != 'pre') %>% 
-             mutate(timepoint.d = recode(timepoint.d,`2` = 1,
-                                         `1` = 0)),
-           cores = 8, chains = 2, iter = 4000,
+             mutate(timepoint.d = recode(timepoint.d,`1` = 0,
+                                         `2` = 1)),
+           cores = 8, chains = 2, iter = 6000,
            control = list(adapt_delta = .99,max_treedepth = 15))
 
 # effect of MFs on oneyear
