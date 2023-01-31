@@ -6,47 +6,70 @@ library(brms)
 
 setwd('/home/bms2202/newmetoo')
 
-### clean #####
-# load data
-tweets_raw = read_csv('data/ALL_TWEETS.csv')
-MFD <- read_csv('data/MFD_scores.csv')
+####### clean ########
+t_raw <- read_csv('data/ALL_TWEETS_indiv.csv')
 
-tweets <- tweets_raw %>% 
-  left_join(MFD) %>% 
+t <- t_raw %>%
   rename(timepoint = "tweet_period") %>% 
   filter(datediff > 0) %>% 
-  mutate(timepoint.d = ifelse(timepoint == "pre",0,
-                              ifelse(timepoint == "post",1,2)),
+  mutate(outrage.d = ifelse(outrage_score >= .7,1,0),
+         datediff = datediff - 1,
+         weekdiff = weekdiff - 1,
+         positivity_st = recode(positivity_st,`2` = 1)) 
+  
+t_concat_raw = read_csv('data/ALL_TWEETS.csv')
+t_concat <- t_concat_raw %>% 
+  rename(timepoint = "tweet_period") %>% 
+  filter(datediff > 0) %>% 
+  mutate(timepoint.d = ifelse(timepoint == "pre",0,1),
          datediff = datediff - 1,
          weekdiff = weekdiff - 1,
          datetime = as_datetime(date),
          overall_date_diff = as.double(difftime(datetime,ymd("2017-10-05"),
                                                 units = "days")),
          overall_week_diff = overall_date_diff/7) %>% 
-  select(-tweet)
+  select(-c(tweet))
 
+# calculate DOC stuff - don't use
+t_doc <- t %>% 
+  group_by(PublicFigure,timepoint,datediff) %>% 
+  summarize(outrage_pct = (sum(outrage.d == 1)/n())*100,
+            outrage_mean = mean(outrage_score))
 
+t_concat <- t_concat %>% 
+  left_join(t_doc)
 
-# motivating factors
+# calculate pre stuff
+t_pres <- t_concat %>% 
+  filter(timepoint == "pre") %>% 
+  group_by(PublicFigure) %>% 
+  summarize(care.vice_pre = mean(care.vice),
+            outrage_pct_pre = mean(outrage_pct),
+            outrage_mean_pre = mean(outrage_mean),
+            care.vice_pre.c = scale(care.vice_pre, scale = F),
+            outrage_pct_pre.c = scale(outrage_pct_pre, scale = F),
+            outrage_mean_pre.c = scale(outrage_mean_pre, scale = F))
+
+t_concat <- t_concat %>% 
+  left_join(t_pres)
+
+### bring together motivating factors
+
+doc_base <- t
+
 ## liking
+# st
+liking <- t %>% 
+  filter(timepoint == "pre") %>% 
+  group_by(PublicFigure) %>% 
+  summarize(liking_st = mean(positivity_st))
+
 # afinn
-afinn_raw <- read_csv('data/afinn_scores.csv')
-afinn <- afinn_raw %>% 
-  rename(timepoint = "tweet_period") %>% 
-  filter(datediff > 0,
-         timepoint == "pre") %>% 
+liking2_raw <- read_csv('data/afinn_scores.csv')
+liking2 <- liking2_raw %>% 
+  filter(tweet_period == "pre") %>% 
   group_by(PublicFigure) %>% 
   summarize(liking_afinn = mean(liking_afinn))
-  
-
-# simple transformers
-st_raw <- read_csv('data/st_scores.csv')
-st <- st_raw %>% 
-  rename(timepoint = "tweet_period") %>% 
-  filter(datediff > 0,
-         timepoint == "pre") %>% 
-  group_by(PublicFigure) %>% 
-  summarize(liking_st = mean(liking_st))
 
 ## severity
 sevp <- read_csv("data/event_severity.csv")
@@ -71,10 +94,10 @@ powprom <- powprom_raw %>%
          post_power = "post_pow_mean")
 
 # count
-count <- tweets %>% 
+count <- t %>% 
   filter(timepoint == "pre") %>% 
   group_by(PublicFigure) %>% 
-  summarize(tweet_count = sum(count))
+  summarize(tweet_count = n())
 
 # news
 news <- read_csv("data/ALL_NEWS.csv")
@@ -89,11 +112,10 @@ motivators <- count %>%
   left_join(powprom) %>% 
   left_join(sevr) %>% 
   left_join(sevp) %>% 
-  left_join(afinn) %>% 
-  left_join(st)
+  left_join(liking) %>% 
+  left_join(liking2)
 
-# combine all
-tweets <- tweets %>% 
+t_concat <- t_concat %>% 
   left_join(motivators) %>% 
   mutate(tweet_count.c = scale(log10(tweet_count), center = T, scale = F),
          articles.c = scale(articles, center = T, scale = F),
@@ -114,111 +136,111 @@ tweets <- tweets %>%
          liking_st.cs = scale(liking_st),
          liking_afinn.cs = scale(liking_afinn))
 
-tweets$familiarity <- rowMeans(subset(tweets, select = c(prominence.cs,
-                                                                           power.cs,
-                                                                           tweet_count.cs,
-                                                                           articles.cs)),
-                                        na.rm = T)
+t_concat$familiarity <- rowMeans(subset(t_concat, select = c(prominence.cs,
+                                                             power.cs,
+                                   tweet_count.cs,
+                                   articles.cs)),
+                                 na.rm = T)
 
-tweets$liking <- rowMeans(subset(tweets, select = c(liking_st.cs,
-                                                                      liking_afinn.cs)),
-                                   na.rm = T)
+t_concat$liking <- rowMeans(subset(t_concat, select = c(liking_st.cs,
+                                                             liking_afinn.cs)),
+                            na.rm = T)
 
-tweets$severity <- rowMeans(subset(tweets, select = c(severity_rubric.cs,
-                                                                        severity_rating.cs)),
-                                     na.rm = T)
+t_concat$severity <- rowMeans(subset(t_concat, select = c(severity_rubric.cs,
+                                                        severity_rating.cs)),
+                              na.rm = T)
+
+tweets <- t_concat
 
 ######## MODELS ######
 
 ## model 1
 # effect of time period
 m1 <- brm(care.vice ~ timepoint.d +
-                  (1 + timepoint.d | PublicFigure),
-                data = tweets %>% 
-                  filter(timepoint != 'oneyear'), 
-                cores = 8, chains = 2, iter = 4000,
-                control = list(adapt_delta = .99,max_treedepth = 15))
+            (1 + timepoint.d | PublicFigure),
+          data = tweets %>% 
+            filter(timepoint != 'oneyear'), 
+          cores = 8, chains = 2, iter = 6000,
+          control = list(adapt_delta = .99,max_treedepth = 15))
 
 
 ## model 2
 # effect of MFs on post
 m2 <- brm(care.vice ~ familiarity*liking*severity + care.vice_pre +
-                  (1 + familiarity*liking*severity | PublicFigure), 
-                data = tweets %>% 
-                  filter(timepoint == 'post'), 
-                cores = 8, chains = 2, iter = 4000,
-                control = list(adapt_delta = .99,max_treedepth = 15))
+            (1 + familiarity*liking*severity | PublicFigure), 
+          data = tweets %>% 
+            filter(timepoint == 'post'), 
+          cores = 8, chains = 2, iter = 4000,
+          control = list(adapt_delta = .99,max_treedepth = 15))
 
 
 ## model 3
 # effect of day
 m3 <- brm(care.vice ~ datediff +
-                   (1 + datediff | PublicFigure),
-                 data = tweets %>% 
-                   filter(timepoint == 'post'),
-                 cores = 8, chains = 2, iter = 4000,
-                 control = list(adapt_delta = .99,max_treedepth = 15)) 
+            (1 + datediff | PublicFigure),
+          data = tweets %>% 
+            filter(timepoint == 'post'),
+          cores = 8, chains = 2, iter = 4000,
+          control = list(adapt_delta = .99,max_treedepth = 15)) 
 
 
 # effect of logarithm day slightly different calc
 m3a <- brm(log(care.vice*10) ~ datediff +
-                   (1 + datediff | PublicFigure),
-                 data = tweets %>% 
-                   filter(timepoint == 'post') %>% 
-                   mutate(care.vice = recode(care.vice, `0` = 1)),
-                 cores = 8, chains = 2, iter = 4000,
-                 control = list(adapt_delta = .99,max_treedepth = 15)) 
+             (1 + datediff | PublicFigure),
+           data = tweets %>% 
+             filter(timepoint == 'post') %>% 
+             mutate(care.vice = recode(care.vice, `0` = 1)),
+           cores = 8, chains = 2, iter = 4000,
+           control = list(adapt_delta = .99,max_treedepth = 15)) 
 
 ## model 4
 # interaction between day and MFs
 m4 <- brm(care.vice ~ datediff*familiarity*liking*severity +
-                  (1 + datediff | PublicFigure), 
-                data = tweets %>% 
-                  filter(timepoint == 'post'), 
-                cores = 8, chains = 2, iter = 4000,
-                control = list(adapt_delta = .99,max_treedepth = 15))
+            (1 + datediff | PublicFigure), 
+          data = tweets %>% 
+            filter(timepoint == 'post'), 
+          cores = 8, chains = 2, iter = 4000,
+          control = list(adapt_delta = .99,max_treedepth = 15))
 
 # interaction between day and MFs, first week only
 m4a <- brm(care.vice ~ datediff*familiarity*liking*severity +
-                    (1 + datediff | PublicFigure), 
-                  data = t_concat %>% 
-                    filter(timepoint == 'post',
-                           weekdiff == 0), 
-                  cores = 8, chains = 2, iter = 4000,
-                  control = list(adapt_delta = .99,max_treedepth = 15))
-
-
+             (1 + datediff | PublicFigure), 
+           data = tweets %>% 
+             filter(timepoint == 'post',
+                    weekdiff == 0), 
+           cores = 8, chains = 2, iter = 4000,
+           control = list(adapt_delta = .99,max_treedepth = 15))
 
 
 ## model 5
 # difference between morality in pre tweets and one year later
 m5 <- brm(care.vice ~ timepoint.d +
-                  (1 + timepoint.d | PublicFigure),
-                data = tweets %>% 
-                  filter(timepoint != 'post') %>% 
-                  mutate(timepoint.d = recode(timepoint.d,`2` = 1)),
-                cores = 8, chains = 2, iter = 4000,
-                control = list(adapt_delta = .99,max_treedepth = 15))
+            (1 + timepoint.d | PublicFigure),
+          data = tweets %>% 
+            filter(timepoint != 'post') %>% 
+            mutate(timepoint.d = recode(timepoint.d,`2` = 1)),
+          cores = 8, chains = 2, iter = 4000,
+          control = list(adapt_delta = .99,max_treedepth = 15))
 # still significantly higher!
 
 # difference between morality in post tweets tweets and one year later
 m5a <- brm(care.vice ~ timepoint.d +
-                   (1 + timepoint.d | PublicFigure),
-                 data = tweets %>% 
-                   filter(timepoint != 'pre') %>% 
-                   mutate(timepoint.d = recode(timepoint.d,`2` = 1,
-                                               `1` = 0)),
-                 cores = 8, chains = 2, iter = 4000,
-                 control = list(adapt_delta = .99,max_treedepth = 15))
+             (1 + timepoint.d | PublicFigure),
+           data = tweets %>% 
+             filter(timepoint != 'pre') %>% 
+             mutate(timepoint.d = recode(timepoint.d,`2` = 1,
+                                         `1` = 0)),
+           cores = 8, chains = 2, iter = 4000,
+           control = list(adapt_delta = .99,max_treedepth = 15))
 
 # effect of MFs on oneyear
 m5b <- brm(care.vice ~ familiarity*liking*severity + 
-                   care.vice_pre +
-                   (1 + familiarity*liking*severity | PublicFigure), 
-                 data = tweets %>% 
-                   filter(timepoint == 'oneyear'), 
-                 cores = 8, chains = 2, iter = 4000,
-                 control = list(adapt_delta = .99,max_treedepth = 15))
+             care.vice_pre +
+             (1 + familiarity*liking*severity | PublicFigure), 
+           data = tweets %>% 
+             filter(timepoint == 'oneyear'), 
+           cores = 8, chains = 2, iter = 4000,
+           control = list(adapt_delta = .99,max_treedepth = 15))
 
 
 ######## FIGURES #######
@@ -332,12 +354,12 @@ ggsave('figs/fig2b.jpg')
 
 ## figure 3
 p3 <- ggplot(data = tweets %>% 
-                   filter(timepoint != "oneyear") %>% 
-                   mutate(datediff = ifelse(timepoint == 'pre',datediff - 21,datediff)) %>% 
-                   group_by(datediff,timepoint) %>% 
-                   summarize(mean_moral = mean(care.vice),
-                             se_moral = sd(care.vice)/sqrt(20)),
-                 aes(x = datediff, y = mean_moral, group = timepoint, color = timepoint)) + 
+               filter(timepoint != "oneyear") %>% 
+               mutate(datediff = ifelse(timepoint == 'pre',datediff - 21,datediff)) %>% 
+               group_by(datediff,timepoint) %>% 
+               summarize(mean_moral = mean(care.vice),
+                         se_moral = sd(care.vice)/sqrt(20)),
+             aes(x = datediff, y = mean_moral, group = timepoint, color = timepoint)) + 
   geom_line() + 
   geom_point() +
   geom_errorbar(aes(ymin = mean_moral - se_moral,
