@@ -7,7 +7,7 @@ library(brms)
 setwd('/home/bms2202/newmetoo')
 
 ####### clean ########
-t_raw <- read_csv('data/ALL_TWEETS_indiv.csv')
+t_raw <- read_csv('data/PrePost_TWEETS_indiv.csv')
 
 t <- t_raw %>%
   rename(timepoint = "tweet_period") %>% 
