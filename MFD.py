@@ -48,6 +48,6 @@ for block in pbar2(tweet_tokens):
 
 MFDpercs = MFDpercs.reset_index(drop = True)
 MFDpercs = MFDpercs.fillna(0)
-tweets = pd.concat([tweets[['date','PublicFigure']], MFDpercs], axis = 1)
+tweets = pd.concat([tweets[['date','tweet_period','PublicFigure']], MFDpercs], axis = 1)
 
 tweets.to_csv(homedir + 'data/MFD_scores.csv', index = False)
