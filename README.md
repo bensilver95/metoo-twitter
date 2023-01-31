@@ -1,6 +1,6 @@
 ## Using Twitter to understand psychological responses to #MeToo
 
-This repository is the analysis pipeline for a project looking at how the perceived morality of public figures changes after being accused of sexual misconduct. All data can be found on the [OSF page](https://osf.io/z6c45/).
+This repository is the analysis pipeline for a project looking at how the perceived morality of public figures changes after being accused of sexual misconduct. All data can be found on the [OSF page](https://osf.io/z6c45/). All scripts run in Python 3.7.
 
 ### Analysis procedures
 
