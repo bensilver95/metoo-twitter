@@ -36,7 +36,7 @@ for block in pbar2(tweet_tokens):
             tmp = pd.DataFrame({'domain':w,'count':subcts[word]}, index = [0])
             cts_df = pd.concat([cts_df,tmp]).reset_index(drop = True)
     
-    if len(overlap) == 0: # stupid bug fix
+    if len(overlap) == 0: # bug fix for new Python
         cts_df = pd.DataFrame({'domain':'fairness.virtue','count':0}, index = [0])
         
     sum_cts_df = cts_df.groupby(by = 'domain').sum(numeric_only = False)

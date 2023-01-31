@@ -77,7 +77,6 @@ def small_clean(df):
     for tweet in df["tweet"]:
         nohttp = re.sub(r"http\S+", "", tweet)
         nolinks.append(nohttp)
-    #df['tweet'] = nolinks
     df = df.assign(tweet = nolinks)
     return df.drop_duplicates(subset = 'tweet', keep = "first").reset_index(drop = True)
 
@@ -120,7 +119,6 @@ for file in pbar(glob(homedir + "tweets/raw/*.csv")):
 
     dfprep = analysis_prep(df,filename)   
     ALL_TWEETS = pd.concat([ALL_TWEETS,dfprep]).reset_index(drop = True)
-    #ALL_TWEETS = ALL_TWEETS.append(dfprep, ignore_index = True)
 
 
 ## post processing for all tweets
@@ -148,13 +146,6 @@ for person in pbar2(ALL_TWEETS['PublicFigure'].unique()):
         minier_df = mini_df[mini_df['tweet_period'] == timepoint]
         for d in minier_df['date'].unique():
             miniest_df = minier_df[minier_df['date'] == d]
-#            concat_df = concat_df.append({'PublicFigure':person,'date':d,
-#                                                            'tweet':' '.join(text for text in miniest_df['tweet']),
-#                                                           'tweet_period':timepoint, 
-#                                                            'datediff': miniest_df['datediff'].unique()[0],
-#                                                            'weekdiff': miniest_df['weekdiff'].unique()[0],
-#                                                            'count': len(miniest_df)}, 
-#                                                           ignore_index = True)
             tmp = pd.DataFrame({'PublicFigure':person,'date':d,
                                                             'tweet':' '.join(text for text in miniest_df['tweet']),
                                                            'tweet_period':timepoint, 
@@ -165,4 +156,3 @@ for person in pbar2(ALL_TWEETS['PublicFigure'].unique()):
              
 print("saving concat file")
 concat_df.to_csv(homedir + "data/ALL_TWEETS.csv", index = False)
-
