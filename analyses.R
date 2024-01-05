@@ -252,7 +252,7 @@ ggplot(tweets %>%
        aes(x = factor(timepoint, 
                       level = c("pre","post","oneyear")), 
            y = care.vice, group = PublicFigure)) +
-  geom_line(color = "darkcyan", alpha = .7) +
+  geom_line(color = "darkcyan", alpha = .3) +
   geom_point(color = "darkcyan", alpha = .7) +
   geom_line(data = tweets %>% # get average line
               group_by(PublicFigure, timepoint) %>% 
@@ -277,7 +277,7 @@ ggplot(tweets %>%
         axis.text.y = element_text(size = 10),
         axis.text.x = element_text(size = 16),
         axis.title.x = element_blank())
-ggsave("figs/fig1.jpg")
+ggsave("figs/fig1.jpg", scale = 2.5)
 
 ## figure 2a
 x = c("Liking","Familiarity","Severity",
@@ -333,7 +333,7 @@ p2<- ggplot(pdf4, aes(x = effect, y = x)) +
         axis.title.y = element_blank(),
         axis.title.x = element_text(size = 16),
         plot.title = element_text(hjust = .5, size = 18))
-ggsave("figs/fig2a.jpg")
+ggsave("figs/fig2a.jpg", scale = 2.5)
 
 ## figure 2b
 sevplot <- tweets %>% 
@@ -362,7 +362,7 @@ ggplot(sevplot, aes(x = liking, y = care.vice,
         plot.title = element_text(size = 18, hjust = .5),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12))
-ggsave('figs/fig2b.jpg')
+ggsave('figs/fig2b.jpg', scale = 2.5)
 
 ## figure 3
 p3 <- ggplot(data = tweets %>% 
@@ -392,7 +392,7 @@ p3 <- ggplot(data = tweets %>%
         axis.text = element_text(size = 14),
         axis.title.x = element_blank(),
         legend.position = "none")
-ggsave('figs/fig3.jpg')
+ggsave('figs/fig3.jpg', scale = 2.5)
 
 ## figure 4a
 
@@ -450,7 +450,7 @@ p4<- ggplot(pdf4, aes(x = effect, y = x)) +
         axis.title.y = element_blank(),
         axis.title.x = element_text(size = 16),
         plot.title = element_text(hjust = .5, size = 18))
-ggsave("figs/fig4a.jpg")
+ggsave("figs/fig4a.jpg", scale = 2.5)
 
 ## figure 4b
 sevplot <- tweets %>% 
@@ -479,4 +479,4 @@ ggplot(sevplot, aes(x = liking, y = care.vice,
         plot.title = element_text(size = 18, hjust = .5),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12))
-ggsave('figs/fig4b.jpg')
+ggsave('figs/fig4b.jpg', scale = 2.5)
