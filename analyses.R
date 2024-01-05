@@ -251,15 +251,26 @@ ggplot(tweets %>%
          summarize(care.vice = mean(care.vice)), 
        aes(x = factor(timepoint, 
                       level = c("pre","post","oneyear")), 
-           y = care.vice)) +
-  geom_violin(fill = "darkcyan", alpha = .7) +
+           y = care.vice, group = PublicFigure)) +
+  geom_line(color = "darkcyan", alpha = .7) +
+  geom_point(color = "darkcyan", alpha = .7) +
+  geom_line(data = tweets %>% # get average line
+              group_by(PublicFigure, timepoint) %>% 
+              summarize(care.vice = mean(care.vice)) %>% 
+              group_by(timepoint) %>% 
+              summarize(care.vice = mean(care.vice)),
+            aes(group = 1), linewidth = 2) +
+  geom_point(data = tweets %>% 
+              group_by(PublicFigure, timepoint) %>% 
+              summarize(care.vice = mean(care.vice)) %>% 
+              group_by(timepoint) %>% 
+              summarize(care.vice = mean(care.vice)),
+            aes(group = 1), size = 3) +
   theme_classic()  +
-  stat_summary(fun = mean, fun.min = mean, fun.max = mean,
-               geom = "crossbar", width = .3) +
-  labs(y = '% Immoral Expressions', 
-       title = 'Immoral Expressions by time period') +
+  labs(y = '% Immoral language', 
+       title = 'Immoral language by time period') +
   scale_x_discrete(labels = c("6 months\nprior to\nallegations",
-                              "Initial 3\nweeks after\allegations",
+                              "Initial 3\nweeks after\nallegations",
                               "1 year\nafter\nallegations")) +
   theme(plot.title = element_text(hjust = .5, size = 18),
         axis.title = element_text(size = 16),
@@ -315,7 +326,7 @@ p2<- ggplot(pdf4, aes(x = effect, y = x)) +
   geom_point(size = 3, color = 'darkcyan') +
   theme_classic() +
   geom_vline(xintercept = 0, linetype = "dotted") +
-  labs(x = "Standardized Beta",title = "Effect Sizes for Motivating Factors\nInitial Three Weeks") +
+  labs(x = "Standardized Beta",title = "Effect sizes for motivating factors:\nInitial three weeks") +
   scale_x_continuous(n.breaks = 10) +
   theme(axis.text.y = element_text(size = 12),
         axis.text.x = element_text(size = 12),
@@ -342,9 +353,9 @@ ggplot(sevplot, aes(x = liking, y = care.vice,
   scale_color_brewer(palette = "Dark2",labels = c("Low","High"), ) +
   scale_fill_brewer(palette = "Dark2") +
   scale_x_continuous(breaks = seq(-1.5,2,.5)) +
-  guides(fill = F) +
-  labs(x = "Liking", y = "% Immoral Expressions",
-       title = "Severity x Liking interaction\nInitial Three Weeks",
+  guides(fill = "none") +
+  labs(x = "Liking", y = "% Immoral language",
+       title = "Severity x liking interaction:\nInitial three weeks",
        color = "Severity Level") +
   theme(axis.title = element_text(size = 16),
         axis.text = element_text(size = 14),
@@ -360,11 +371,12 @@ p3 <- ggplot(data = tweets %>%
                group_by(datediff,timepoint) %>% 
                summarize(mean_moral = mean(care.vice),
                          se_moral = sd(care.vice)/sqrt(20)),
-             aes(x = datediff, y = mean_moral, group = timepoint, color = timepoint)) + 
-  geom_line() + 
-  geom_point() +
+             aes(x = datediff, y = mean_moral, group = timepoint)) + 
+  geom_line(color = "darkcyan") + 
+  geom_point(color = "darkcyan") +
   geom_errorbar(aes(ymin = mean_moral - se_moral,
-                    ymax = mean_moral + se_moral)) +
+                    ymax = mean_moral + se_moral),
+                color = "darkcyan") +
   geom_vline(xintercept  = 0, color = 'darkgray', linetype = 'dashed') +
   scale_color_brewer(palette = "Set2") +
   scale_x_continuous(breaks = c(-11,11),
@@ -373,8 +385,8 @@ p3 <- ggplot(data = tweets %>%
   theme_classic() +
   theme(axis.line = element_line(colour = "black")) +
   labs(
-    y = '% Immoral Expressions',color = "Time period") +
-  ggtitle('Immoral Expressions by day') +
+    y = '% Immoral language',color = "Time period") +
+  ggtitle('Immoral language by day') +
   theme(plot.title = element_text(hjust = .5, size = 18),
         axis.title = element_text(size = 16),
         axis.text = element_text(size = 14),
@@ -431,7 +443,7 @@ p4<- ggplot(pdf4, aes(x = effect, y = x)) +
   theme_classic() +
   geom_vline(xintercept = 0, linetype = "dotted") +
   labs(x = "Standardized Beta",
-       title = "Effect Sizes for Motivating Factors\nOne year later") +
+       title = "Effect Sizes for motivating factors:\nOne year later") +
   scale_x_continuous(n.breaks = 10) +
   theme(axis.text.y = element_text(size = 12),
         axis.text.x = element_text(size = 12),
@@ -459,8 +471,8 @@ ggplot(sevplot, aes(x = liking, y = care.vice,
   scale_fill_brewer(palette = "Dark2") +
   scale_x_continuous(breaks = seq(-1.5,2,.5)) +
   guides(fill = F) +
-  labs(x = "Liking", y = "% Immoral Expressions",
-       title = "Severity x Liking interaction\nOne Year Later",
+  labs(x = "Liking", y = "% Immoral language",
+       title = "Severity x liking interaction:\nOne year later",
        color = "Severity Level") +
   theme(axis.title = element_text(size = 16),
         axis.text = element_text(size = 14),
