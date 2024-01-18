@@ -245,6 +245,7 @@ m5b <- brm(care.vice ~ familiarity*liking*severity +
 
 
 ######## FIGURES #######
+# all figure numbers are 1 lower than indicated in paper
 ## figure 1 
 ggplot(tweets %>% 
          group_by(PublicFigure, timepoint) %>% 
@@ -318,7 +319,7 @@ pdf4 <- data_frame(x = x, measure = measure,
                    lower80 = lower80, upper80 = upper80)
 pdf4$x <- factor(pdf4$x, levels = rev(x))
 
-p2<- ggplot(pdf4, aes(x = effect, y = x)) +
+ggplot(pdf4, aes(x = effect, y = x)) +
   geom_errorbar(aes(xmin = lower, xmax = upper),
                 width = 0, color = 'darkcyan') +
   geom_errorbar(aes(xmin = lower80, xmax = upper80),
@@ -326,7 +327,8 @@ p2<- ggplot(pdf4, aes(x = effect, y = x)) +
   geom_point(size = 3, color = 'darkcyan') +
   theme_classic() +
   geom_vline(xintercept = 0, linetype = "dotted") +
-  labs(x = "Standardized Beta",title = "Effect sizes for motivating factors:\nInitial three weeks") +
+  labs(x = "Standardized Beta",
+       title = "Effect sizes for motivating factors:\nInitial 3 weeks after allegations") +
   scale_x_continuous(n.breaks = 10) +
   theme(axis.text.y = element_text(size = 12),
         axis.text.x = element_text(size = 12),
@@ -355,8 +357,8 @@ ggplot(sevplot, aes(x = liking, y = care.vice,
   scale_x_continuous(breaks = seq(-1.5,2,.5)) +
   guides(fill = "none") +
   labs(x = "Liking", y = "% Immoral language",
-       title = "Severity x liking interaction:\nInitial three weeks",
-       color = "Severity Level") +
+       title = "Allegation severity x liking interaction:\nInitial 3 weeks after allegations",
+       color = "Allegation\nseverity") +
   theme(axis.title = element_text(size = 16),
         axis.text = element_text(size = 14),
         plot.title = element_text(size = 18, hjust = .5),
@@ -365,7 +367,7 @@ ggplot(sevplot, aes(x = liking, y = care.vice,
 ggsave('figs/fig2b.jpg', scale = 2.5)
 
 ## figure 3
-p3 <- ggplot(data = tweets %>% 
+ggplot(data = tweets %>% 
                filter(timepoint != "oneyear") %>% 
                mutate(datediff = ifelse(timepoint == 'pre',datediff - 21,datediff)) %>% 
                group_by(datediff,timepoint) %>% 
@@ -380,8 +382,8 @@ p3 <- ggplot(data = tweets %>%
   geom_vline(xintercept  = 0, color = 'darkgray', linetype = 'dashed') +
   scale_color_brewer(palette = "Set2") +
   scale_x_continuous(breaks = c(-11,11),
-                     labels = c("Baseline (6 months prior)\nby day",
-                                "Initial three weeks\nby day")) +
+                     labels = c("6 months prior to\nallegations, by day",
+                                "Initial three weeks after\nallegations, by day")) +
   theme_classic() +
   theme(axis.line = element_line(colour = "black")) +
   labs(
@@ -434,7 +436,7 @@ pdf4 <- data_frame(x = x, measure = measure,
                    lower80 = lower80, upper80 = upper80)
 pdf4$x <- factor(pdf4$x, levels = rev(x))
 
-p4<- ggplot(pdf4, aes(x = effect, y = x)) +
+ggplot(pdf4, aes(x = effect, y = x)) +
   geom_errorbar(aes(xmin = lower, xmax = upper),
                 width = 0, color = 'darkcyan') +
   geom_errorbar(aes(xmin = lower80, xmax = upper80),
@@ -443,7 +445,7 @@ p4<- ggplot(pdf4, aes(x = effect, y = x)) +
   theme_classic() +
   geom_vline(xintercept = 0, linetype = "dotted") +
   labs(x = "Standardized Beta",
-       title = "Effect Sizes for motivating factors:\nOne year later") +
+       title = "Effect sizes for motivating factors:\n1 year after allegations") +
   scale_x_continuous(n.breaks = 10) +
   theme(axis.text.y = element_text(size = 12),
         axis.text.x = element_text(size = 12),
@@ -472,8 +474,8 @@ ggplot(sevplot, aes(x = liking, y = care.vice,
   scale_x_continuous(breaks = seq(-1.5,2,.5)) +
   guides(fill = F) +
   labs(x = "Liking", y = "% Immoral language",
-       title = "Severity x liking interaction:\nOne year later",
-       color = "Severity Level") +
+       title = "Allegation severity x liking interaction:\n1 year after allegations",
+       color = "Allegation\nseverity") +
   theme(axis.title = element_text(size = 16),
         axis.text = element_text(size = 14),
         plot.title = element_text(size = 18, hjust = .5),
