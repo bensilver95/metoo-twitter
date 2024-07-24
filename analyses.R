@@ -383,7 +383,7 @@ ggplot(data = tweets %>%
   scale_color_brewer(palette = "Set2") +
   scale_x_continuous(breaks = c(-11,11),
                      labels = c("6 months prior to\nallegations, by day",
-                                "Initial three weeks after\nallegations, by day")) +
+                                "Initial 3 weeks after\nallegations, by day")) +
   theme_classic() +
   theme(axis.line = element_line(colour = "black")) +
   labs(
